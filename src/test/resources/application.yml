@@ -1,0 +1,21 @@
+simplelauncher:
+#  locale: ko
+  datasource:
+    url: jdbc:h2:file:./db/simplelauncher
+    driver-class: org.h2.Driver
+#    user:
+#    password:
+logging:
+  file:
+    path: log/log
+  pattern:
+#    console: "%d{HH:mm:ss.SSS} %highlight(%-5level) %green([%12(%.-12(%t))]) %yellow(%50(\\(%F:%L\\))) %msg%n"
+    console: "%d{HH:mm:ss.SSS} %highlight(%-5level) %green([%12(%.-12(%t))]) %yellow(%logger) %msg%n"
+  level:
+    root: off
+    Exposed: debug
+    org.hibernate.SQL: error
+    org.hibernate.type.descriptor.sql.BasicBinder: error
+    com.github.nayasis: debug
+    com.github.nayasis.simplelauncher: debug
+    com.jediterm.terminal.emulator: error
