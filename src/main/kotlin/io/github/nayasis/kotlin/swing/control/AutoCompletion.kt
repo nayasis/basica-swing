@@ -5,6 +5,7 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import java.awt.event.HierarchyEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -76,9 +77,14 @@ class AutoCompletion<T>(
     val isShowing: Boolean
         get() = popup.isVisible
 
+    private var lookAndFeelSubscription: AutoCloseable? = null
+
     init {
         // the popup is outside any window while hidden, so a theme switch would not reach it
-        onLookAndFeelChange { SwingUtilities.updateComponentTreeUI(popup) }
+        field.addHierarchyListener { e ->
+            if (e.changeFlags and HierarchyEvent.DISPLAYABILITY_CHANGED.toLong() != 0L) syncLookAndFeelSubscription()
+        }
+        syncLookAndFeelSubscription()
         list.addMouseListener(object: MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
                 if (!SwingUtilities.isLeftMouseButton(e)) return
@@ -129,6 +135,18 @@ class AutoCompletion<T>(
 
     fun hide() {
         if (popup.isVisible) popup.isVisible = false
+    }
+
+    private fun syncLookAndFeelSubscription() {
+        if (field.isDisplayable) {
+            if (lookAndFeelSubscription != null) return
+            SwingUtilities.updateComponentTreeUI(popup)
+            lookAndFeelSubscription = onLookAndFeelChange { SwingUtilities.updateComponentTreeUI(popup) }
+        } else {
+            lookAndFeelSubscription?.close()
+            lookAndFeelSubscription = null
+            hide()
+        }
     }
 
     /**

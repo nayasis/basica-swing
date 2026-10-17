@@ -174,6 +174,41 @@ internal class TableTest {
     }
 
     @Test
+    fun `rebinding disconnects selection updates from the old model`() = runUiAndWait<Unit> {
+        val f = fixture()
+        val replacement = ListTableModel(FilterSortList(listOf(carol))).column("Name", Person::name)
+        f.table.bind(replacement)
+        f.table.selectBy(carol)
+
+        f.list.items.add(0, Person("New", 10))
+
+        f.table.selectedRow shouldBe 0
+        f.table.focusedItem<Person>() shouldBe carol
+        f.table.names() shouldBe listOf("Carol")
+
+        f.table.bind(replacement)
+        f.table.selectBy(carol)
+        replacement.source.add(alice)
+        f.table.sortKeys = listOf(ColumnSortKey("Name", true))
+
+        f.table.selectedRow shouldBe 1
+        f.table.focusedItem<Person>() shouldBe carol
+    }
+
+    @Test
+    fun `rebinding leaves another tables selection wrapper intact`() = runUiAndWait<Unit> {
+        val f = fixture()
+        val other = JTable().bind(f.model)
+        other.selectBy(bob)
+        f.table.bind(ListTableModel(FilterSortList(listOf(carol))).column("Name", Person::name))
+
+        f.list.items.add(0, Person("New", 10))
+
+        other.selectedRow shouldBe 2
+        other.focusedItem<Person>() shouldBe bob
+    }
+
+    @Test
     fun `editing a cell writes through the setter`() {
         assumeDisplay()
         runUiAndWait {

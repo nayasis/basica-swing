@@ -20,6 +20,7 @@ import javax.swing.table.TableCellRenderer
 
 private const val KEY_HEADER_LISTENER = "basica.table.headerListener"
 private const val KEY_MODEL_LISTENER  = "basica.table.modelListener"
+private const val KEY_REFRESH_WRAPPER = "basica.table.refreshWrapper"
 
 /** sort criteria of the bound [ListTableModel], empty when the table is not bound to one. */
 var JTable.sortKeys: List<ColumnSortKey>
@@ -36,6 +37,9 @@ var JTable.sortKeys: List<ColumnSortKey>
 fun <S> JTable.bind(model: ListTableModel<S>): JTable {
 
     (getClientProperty(KEY_MODEL_LISTENER) as? TableModelListener)?.let { this.model.removeTableModelListener(it) }
+    (this.model as? ListTableModel<*>)?.let { previous ->
+        if (previous.refreshWrapper === getClientProperty(KEY_REFRESH_WRAPPER)) previous.refreshWrapper = null
+    }
     rowSorter = null
     this.model = model
 
@@ -46,7 +50,7 @@ fun <S> JTable.bind(model: ListTableModel<S>): JTable {
     model.addTableModelListener(structureListener)
     putClientProperty(KEY_MODEL_LISTENER, structureListener)
 
-    model.refreshWrapper = { refresh: () -> Unit ->
+    val refreshWrapper: (() -> Unit) -> Unit = { refresh ->
         val previous: List<S> = selectedRows.toList().mapNotNull { row -> model.previousRowObject(row) }
         refresh()
         if (previous.isNotEmpty()) {
@@ -62,6 +66,8 @@ fun <S> JTable.bind(model: ListTableModel<S>): JTable {
         }
         tableHeader?.repaint()
     }
+    model.refreshWrapper = refreshWrapper
+    putClientProperty(KEY_REFRESH_WRAPPER, refreshWrapper)
 
     installSortHeader()
     return this
