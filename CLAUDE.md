@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 basica-swing is a Kotlin Swing library: application base, dialogs, borderless windows, table binding and window-state persistence. It is a port of `basicafx-kt` (JavaFX) at `C:\project_nayasis\basicafx-kt`, branch `feature/remove-tornadofx`.
 
-**Tech stack**: Kotlin 2.2.20, JDK 25 toolchain, Swing/AWT, kotlinx-coroutines (with `Dispatchers.Swing`), OkHttp, basica-kt.
+**Tech stack**: Kotlin 2.4.21, JDK 25 toolchain, Swing/AWT, kotlinx-coroutines (with `Dispatchers.Swing`), OkHttp, basica-kt.
 
 No JavaFX, no TornadoFX-style DSL. The port deliberately dropped JavaFX-only and node-lookup helpers (find-by-id, children walkers, CSS style maps). Do not reintroduce them; components that need persisting are identified by `Component.name`.
 
@@ -23,7 +23,7 @@ The library is look-and-feel agnostic. FlatLaf (`FlatIntelliJLaf`) is a **test-o
 
 ### JVM target
 
-Kotlin 2.2.20 cannot emit JVM 25 bytecode. The build runs on the JDK 25 toolchain but targets 24 (`jvmTarget = JVM_24`, `options.release = 24`). Raise both together once Kotlin supports 25.
+The build runs on the JDK 25 toolchain but keeps targeting 24 (`jvmTarget = JVM_24`, `options.release = 24`) for compatibility. Change both targets together if raising the minimum runtime version.
 
 ### TLS behind the corporate proxy
 

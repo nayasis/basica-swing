@@ -1,7 +1,7 @@
 import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
-	kotlin("jvm") version "2.2.20"
+	kotlin("jvm") version "2.4.21"
 	`java-library`
 	signing
 	id("com.vanniktech.maven.publish") version "0.31.0"
@@ -48,18 +48,19 @@ java {
 
 dependencies {
 
-	implementation(platform("com.fasterxml.jackson:jackson-bom:2.21.1"))
+	implementation(platform("com.fasterxml.jackson:jackson-bom:2.21.7"))
 	implementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.11.0"))
 
-	implementation("io.github.nayasis:basica-kt:0.3.14")
+	implementation("io.github.nayasis:basica-kt:0.4.0")
 	implementation("commons-cli:commons-cli:1.11.0")
 	implementation("org.jclarion:image4j:0.7")
-	implementation("org.sejda.imageio:webp-imageio:0.1.6")
+	implementation("com.github.usefulness:webp-imageio:0.11.0")
 	implementation("org.yaml:snakeyaml:2.5")
-	implementation("ch.qos.logback:logback-classic:1.5.31")
+	implementation("ch.qos.logback:logback-classic:1.6.5")
 	implementation("com.squareup.okhttp3:okhttp:5.5.0")
 	implementation("com.fasterxml.jackson.core:jackson-annotations")
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+
 	// reflection is used by SimpleDiContainer.
 	implementation(kotlin("reflect"))
 	implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
@@ -74,7 +75,7 @@ dependencies {
 
 }
 
-// Kotlin 2.2.20 cannot emit JVM 25 bytecode yet: build on the JDK 25 toolchain, target 24.
+// Build on the JDK 25 toolchain, keeping Java and Kotlin bytecode targets at 24.
 kotlin {
 	compilerOptions {
 		jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_24)
