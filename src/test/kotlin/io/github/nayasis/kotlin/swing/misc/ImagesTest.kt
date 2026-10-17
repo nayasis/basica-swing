@@ -8,9 +8,12 @@ import java.awt.AlphaComposite
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.IOException
+import java.io.ByteArrayOutputStream
 import java.nio.file.Files
 import java.util.Base64
 import javax.imageio.ImageIO
+import javax.imageio.IIOImage
+import javax.imageio.ImageWriteParam
 import javax.swing.ImageIcon
 
 class ImagesTest {
@@ -72,6 +75,17 @@ class ImagesTest {
     }
 
     @Test
+    fun resizeKeepsAtLeastOnePixelOnEachAxis() {
+        val wide = BufferedImage(1000, 1, BufferedImage.TYPE_INT_ARGB).resize(32)
+        wide.width shouldBe 32
+        wide.height shouldBe 1
+
+        val tall = BufferedImage(1, 1000, BufferedImage.TYPE_INT_ARGB).resize(32)
+        tall.width shouldBe 1
+        tall.height shouldBe 32
+    }
+
+    @Test
     fun cropRemovesPixels() {
         val image = BufferedImage(40, 30, BufferedImage.TYPE_INT_ARGB)
         image.cropTop(5).height shouldBe 25
@@ -89,6 +103,40 @@ class ImagesTest {
 
         decoded.width shouldBe 8
         decoded.height shouldBe 6
+    }
+
+    @Test
+    fun webpRoundTripsColorAndTransparency() {
+        val image = BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB).apply {
+            setRGB(0, 0, 0x804080C0.toInt())
+            setRGB(1, 1, 0xFF123456.toInt())
+        }
+        val writer = ImageIO.getImageWritersByFormatName("webp").next()
+        val bytes = ByteArrayOutputStream()
+        try {
+            ImageIO.createImageOutputStream(bytes).use { output ->
+                writer.output = output
+                val parameters = writer.defaultWriteParam.apply {
+                    compressionMode = ImageWriteParam.MODE_EXPLICIT
+                    compressionType = compressionTypes.first { it.equals("Lossless", ignoreCase = true) }
+                }
+                writer.write(null, IIOImage(image, null, null), parameters)
+            }
+        } finally {
+            writer.dispose()
+        }
+
+        val decoded = bytes.toByteArray().toBufferedImage()
+        decoded.width shouldBe 2
+        decoded.height shouldBe 2
+        decoded.getRGB(0, 0) shouldBe image.getRGB(0, 0)
+        decoded.getRGB(1, 1) shouldBe image.getRGB(1, 1)
+    }
+
+    @Test
+    fun malformedWebpIsRejected() {
+        val truncated = "RIFF".toByteArray() + byteArrayOf(4, 0, 0, 0) + "WEBPVP8L".toByteArray()
+        org.junit.jupiter.api.assertThrows<IOException> { truncated.toBufferedImage() }
     }
 
     @Test

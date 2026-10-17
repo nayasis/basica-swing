@@ -259,6 +259,7 @@ fun BufferedImage.resize(width: Int, height: Int): BufferedImage {
 }
 
 fun BufferedImage.resize(maxPixel: Int): BufferedImage {
+    require(maxPixel > 0) { "maxPixel must be positive" }
     return this.let { image ->
         var w = image.width.coerceAtLeast(1).toDouble()
         var h = image.height.coerceAtLeast(1).toDouble()
@@ -267,12 +268,12 @@ fun BufferedImage.resize(maxPixel: Int): BufferedImage {
             w > h -> {
                 h = h * maxPixel / width
                 w = maxPixel.toDouble()
-                image.resize(w.toInt(),h.toInt())
+                image.resize(w.toInt().coerceAtLeast(1),h.toInt().coerceAtLeast(1))
             }
             else -> {
                 w = w * maxPixel / height
                 h = maxPixel.toDouble()
-                image.resize(w.toInt(),h.toInt())
+                image.resize(w.toInt().coerceAtLeast(1),h.toInt().coerceAtLeast(1))
             }
         }
     }
