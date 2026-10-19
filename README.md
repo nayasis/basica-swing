@@ -1,6 +1,8 @@
 # basica-swing
 
-Basic Swing library based on Kotlin. A Swing port of [basicafx-kt](https://github.com/nayasis/basicafx-kt) without JavaFX.
+Basic Swing library based on Kotlin
+
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.nayasis/basica-swing.svg)](https://central.sonatype.com/artifact/io.github.nayasis/basica-swing)
 
 ## Dependency
 
