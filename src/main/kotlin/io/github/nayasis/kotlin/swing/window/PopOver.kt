@@ -1,7 +1,6 @@
 package io.github.nayasis.kotlin.swing.window
 
 import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.Component
 import java.awt.Point
 import java.awt.Window
@@ -9,12 +8,10 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JWindow
 import javax.swing.SwingUtilities
-import javax.swing.UIManager
 
 /**
  * small window that stays open under an anchor component until [hide] is called.
@@ -70,12 +67,13 @@ class PopOver(content: JComponent) {
         val owner = SwingUtilities.getWindowAncestor(anchor)
         this.anchor = anchor
         holder.removeAll()
-        holder.border = BorderFactory.createLineBorder(UIManager.getColor("Component.borderColor") ?: Color.GRAY)
+        holder.border = WindowBorder()
         holder.add(content, BorderLayout.CENTER)
         window = JWindow(owner).apply {
             contentPane = holder
             focusableWindowState = false
             pack()
+            installRoundedCorners()
         }
         owner?.addComponentListener(follower)
         owner?.addWindowListener(closer)

@@ -62,6 +62,8 @@ property/   InsetProperty, PositionProperty, SizeProperty, TableProperty, Window
 
 `AbstractProgressDialog` creates its window lazily because a `JDialog` owner is fixed at construction. Call `initOwner`/`initModality` before first use; afterwards they throw.
 
+Progress dialogs and popovers inherit the application's current look and feel. Their custom borders read the current UI defaults, and undecorated windows use a rounded outline where window shaping is supported. Refreshing the Swing component tree updates existing windows, including the progress header font and separator.
+
 ### Tables
 
 `ListTableModel<S>(FilterSortList<S>)` + `JTable.bind(model)`: header click cycles asc / desc / none, ctrl-click adds a secondary key. Sort state is `ListTableModel.sortKeys` (`ColumnSortKey(columnId, ascending)`). Hidden columns are removed from the `TableColumnModel` and kept in a registry so `TableProperty` can restore them.

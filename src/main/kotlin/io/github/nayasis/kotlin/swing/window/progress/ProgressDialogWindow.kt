@@ -4,9 +4,11 @@ package io.github.nayasis.kotlin.swing.window.progress
 
 import io.github.nayasis.kotlin.swing.misc.runLater
 import io.github.nayasis.kotlin.swing.window.installWindowMover
+import io.github.nayasis.kotlin.swing.window.installRoundedCorners
 import io.github.nayasis.kotlin.swing.window.loadDefaultIcon
+import io.github.nayasis.kotlin.swing.window.WindowBorder
+import io.github.nayasis.kotlin.swing.window.windowBorderColor
 import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
@@ -22,6 +24,7 @@ import javax.swing.JPanel
 import javax.swing.JProgressBar
 import javax.swing.SwingConstants
 import javax.swing.UIManager
+import javax.swing.plaf.FontUIResource
 
 private const val PROGRESS_SCALE = 1000
 
@@ -32,7 +35,12 @@ private const val PROGRESS_SCALE = 1000
  */
 class ProgressDialogWindow(progressCount: Int, owner: Window? = null): JDialog(owner) {
 
-    val titleHeader  = JLabel(" ").apply { font = font.deriveFont(Font.BOLD, 13f) }
+    val titleHeader = object: JLabel(" ") {
+        override fun updateUI() {
+            super.updateUI()
+            font = FontUIResource(UIManager.getFont("Label.font").deriveFont(Font.BOLD))
+        }
+    }
     val progressBars = ArrayList<JProgressBar>()
     val messages     = ArrayList<JLabel>()
     val subMessages  = ArrayList<JLabel>()
@@ -52,13 +60,9 @@ class ProgressDialogWindow(progressCount: Int, owner: Window? = null): JDialog(o
             progressBars.add(JProgressBar(0, PROGRESS_SCALE))
         }
 
-        val borderColor = UIManager.getColor("Component.borderColor")
-            ?: UIManager.getColor("Separator.foreground")
-            ?: Color.GRAY
-        val activeColor = UIManager.getColor("Component.focusedBorderColor") ?: Color(0x486a9a)
-
+        var dragging = false
         val root = JPanel(GridBagLayout())
-        root.border = BorderFactory.createLineBorder(borderColor)
+        root.border = WindowBorder { dragging }
 
         var row = 0
         fun add(component: JComponent, bottom: Int = 0) {
@@ -71,12 +75,16 @@ class ProgressDialogWindow(progressCount: Int, owner: Window? = null): JDialog(o
             })
         }
 
-        add(JPanel(BorderLayout()).apply {
+        add(object: JPanel(BorderLayout()) {
+            override fun updateUI() {
+                super.updateUI()
+                border = BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, windowBorderColor()),
+                    BorderFactory.createEmptyBorder(7, 5, 7, 5),
+                )
+            }
+        }.apply {
             isOpaque = false
-            border   = BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, borderColor),
-                BorderFactory.createEmptyBorder(7, 5, 7, 5),
-            )
             add(titleHeader, BorderLayout.CENTER)
             add(headerRight, BorderLayout.EAST)
         }, bottom = 7)
@@ -100,10 +108,12 @@ class ProgressDialogWindow(progressCount: Int, owner: Window? = null): JDialog(o
         isAlwaysOnTop = true
         loadDefaultIcon()
         pack()
+        installRoundedCorners()
         setLocationRelativeTo(owner)
 
-        root.installWindowMover(styleOnDrag = { dragging ->
-            root.border = BorderFactory.createLineBorder(if(dragging) activeColor else borderColor)
+        root.installWindowMover(styleOnDrag = { active ->
+            dragging = active
+            root.repaint()
         })
     }
 
