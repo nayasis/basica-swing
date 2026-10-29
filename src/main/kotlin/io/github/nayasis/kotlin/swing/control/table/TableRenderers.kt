@@ -3,6 +3,8 @@ package io.github.nayasis.kotlin.swing.control.table
 import java.awt.Component
 import java.beans.PropertyChangeListener
 import java.util.Date
+import javax.swing.Icon
+import javax.swing.ImageIcon
 import javax.swing.JLabel
 import javax.swing.JTable
 import javax.swing.SwingUtilities
@@ -10,6 +12,12 @@ import javax.swing.plaf.basic.BasicHTML
 import javax.swing.table.TableCellRenderer
 
 private const val KEY_UI_SYNC = "basica.table.rendererUiSync"
+
+/** the column classes JTable has a default renderer for. */
+internal val DEFAULT_RENDERER_TYPES: List<Class<*>> = listOf(
+    Any::class.java, Number::class.java, java.lang.Float::class.java, java.lang.Double::class.java,
+    Date::class.java, Icon::class.java, ImageIcon::class.java, java.lang.Boolean::class.java,
+)
 
 /** a renderer that decorates another one. */
 internal interface WrappingRenderer: TableCellRenderer {
@@ -20,6 +28,16 @@ internal fun TableCellRenderer.innermost(): TableCellRenderer {
     var renderer = this
     while (renderer is WrappingRenderer) renderer = renderer.base
     return renderer
+}
+
+/** whether a [T] is anywhere in the chain of wrappers, so a second call does not wrap again. */
+internal inline fun <reified T: WrappingRenderer> TableCellRenderer.isWrappedBy(): Boolean {
+    var renderer: TableCellRenderer? = this
+    while (renderer != null) {
+        if (renderer is T) return true
+        renderer = (renderer as? WrappingRenderer)?.base
+    }
+    return false
 }
 
 /** cuts the text of [base]'s label to what fits the column, instead of letting the label end it with "...". */
@@ -43,15 +61,15 @@ class NoEllipsisRenderer(override val base: TableCellRenderer): WrappingRenderer
  * calling it again only wraps what is new.
  */
 fun JTable.clipTextInsteadOfEllipsis(): JTable {
-    listOf(Any::class.java, Number::class.java, java.lang.Float::class.java, java.lang.Double::class.java, Date::class.java).forEach { type ->
-        getDefaultRenderer(type)?.let { if (it !is NoEllipsisRenderer) setDefaultRenderer(type, NoEllipsisRenderer(it)) }
+    DEFAULT_RENDERER_TYPES.forEach { type ->
+        getDefaultRenderer(type)?.let { if (!it.isWrappedBy<NoEllipsisRenderer>()) setDefaultRenderer(type, NoEllipsisRenderer(it)) }
     }
     columnModel.columns.toList().forEach { column ->
-        column.cellRenderer?.let { if (it !is NoEllipsisRenderer) column.cellRenderer = NoEllipsisRenderer(it) }
-        column.headerRenderer?.let { if (it !is NoEllipsisRenderer) column.headerRenderer = NoEllipsisRenderer(it) }
+        column.cellRenderer?.let { if (!it.isWrappedBy<NoEllipsisRenderer>()) column.cellRenderer = NoEllipsisRenderer(it) }
+        column.headerRenderer?.let { if (!it.isWrappedBy<NoEllipsisRenderer>()) column.headerRenderer = NoEllipsisRenderer(it) }
     }
     tableHeader?.let { header ->
-        header.defaultRenderer?.let { if (it !is NoEllipsisRenderer) header.defaultRenderer = NoEllipsisRenderer(it) }
+        header.defaultRenderer?.let { if (!it.isWrappedBy<NoEllipsisRenderer>()) header.defaultRenderer = NoEllipsisRenderer(it) }
     }
     syncWrappedRenderersWithLookAndFeel()
     return this
@@ -71,8 +89,7 @@ internal fun JTable.syncWrappedRenderersWithLookAndFeel() {
 
 private fun JTable.updateWrappedRenderers() {
     val renderers = buildList {
-        listOf(Any::class.java, Number::class.java, java.lang.Float::class.java, java.lang.Double::class.java, Date::class.java)
-            .forEach { add(getDefaultRenderer(it)) }
+        DEFAULT_RENDERER_TYPES.forEach { add(getDefaultRenderer(it)) }
         columnModel.columns.toList().forEach { add(it.cellRenderer); add(it.headerRenderer) }
         add(tableHeader?.defaultRenderer)
     }

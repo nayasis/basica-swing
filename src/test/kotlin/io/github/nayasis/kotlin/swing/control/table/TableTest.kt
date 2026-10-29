@@ -10,9 +10,14 @@ import io.github.nayasis.kotlin.swing.property.TableProperty
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import java.awt.Color
+import java.awt.Point
+import javax.swing.DropMode
 import javax.swing.JLabel
 import javax.swing.JTable
 import javax.swing.SwingUtilities
+import javax.swing.TransferHandler
+import javax.swing.UIManager
 
 data class Person(val name: String, var age: Int, val nick: String? = null)
 
@@ -40,6 +45,23 @@ internal class TableTest {
     }
 
     private fun JTable.names() = (0 until rowCount).map { model.getValueAt(it, 0) }
+
+    /** what a drag over the cell does: JTable keeps the drop location API to the drag and drop machinery. */
+    private fun JTable.dragOver(row: Int, col: Int) {
+        val rect = getCellRect(row, col, false)
+        val location = JTable::class.java.getDeclaredMethod("dropLocationForPoint", Point::class.java)
+            .apply { isAccessible = true }.invoke(this, Point(rect.centerX.toInt(), rect.centerY.toInt()))
+        setDropLocation(location as TransferHandler.DropLocation)
+    }
+
+    private fun JTable.dragExit() = setDropLocation(null)
+
+    private fun JTable.setDropLocation(location: TransferHandler.DropLocation?) {
+        JTable::class.java.getDeclaredMethod("setDropLocation", TransferHandler.DropLocation::class.java, Any::class.java, Boolean::class.javaPrimitiveType)
+            .apply { isAccessible = true }.invoke(this, location, null, false)
+    }
+
+    private fun JTable.cellBackground(row: Int, col: Int): Color = prepareRenderer(getCellRenderer(row, col), row, col).background
 
     @Test
     fun `model exposes the visible rows and the declared columns`() {
@@ -151,6 +173,50 @@ internal class TableTest {
             }
         } finally {
             runUiAndWait { installTheme() }
+        }
+    }
+
+    @Test
+    fun `a drag over a row highlights the cell or the whole row`() {
+        assumeDisplay()
+        installTheme()
+        runUiAndWait {
+            val f = fixture()
+            f.table.dropMode = DropMode.ON
+            f.table.setSize(300, f.table.rowHeight * 3)
+            val drop = UIManager.getColor("Table.dropCellBackground") ?: f.table.selectionBackground
+            val plain = f.table.cellBackground(0, 1)
+            (plain != drop) shouldBe true
+
+            // JTable by itself: only the cell under the cursor
+            f.table.dragOver(0, 0)
+            (0..2).map { f.table.cellBackground(0, it) == drop } shouldBe listOf(true, false, false)
+
+            f.table.dropHighlight = DropHighlight.ROW
+            (0..2).map { f.table.cellBackground(0, it) == drop } shouldBe listOf(true, true, true)
+            (0..2).map { f.table.cellBackground(2, it) == drop } shouldBe listOf(false, false, false)
+
+            // the renderers do not keep the drop color once the drag is gone
+            f.table.dragExit()
+            (0..2).map { f.table.cellBackground(0, it) } shouldBe (0..2).map { plain }
+
+            f.table.dragOver(2, 1)
+            f.table.dropHighlight = DropHighlight.CELL
+            (0..2).map { f.table.cellBackground(2, it) == drop } shouldBe listOf(false, true, false)
+        }
+    }
+
+    @Test
+    fun `setting the row highlight again wraps the renderers once`() {
+        assumeDisplay()
+        runUiAndWait {
+            val f = fixture()
+            f.table.dropHighlight = DropHighlight.ROW
+            val renderer = f.table.getDefaultRenderer(Any::class.java)
+            f.table.dropHighlight = DropHighlight.ROW
+            f.table.clipTextInsteadOfEllipsis()
+            f.table.dropHighlight = DropHighlight.ROW
+            (f.table.getDefaultRenderer(Any::class.java) as NoEllipsisRenderer).base shouldBe renderer
         }
     }
 

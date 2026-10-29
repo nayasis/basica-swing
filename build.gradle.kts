@@ -89,6 +89,8 @@ tasks.withType<JavaCompile> {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	// tests set a JTable drop location, which only the drag and drop machinery can do
+	jvmArgs("--add-opens=java.desktop/javax.swing=ALL-UNNAMED")
 }
 
 mavenPublishing {
