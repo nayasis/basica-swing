@@ -212,7 +212,7 @@ private class TokenFlowLayout(
             val preferred = child.preferredSize.width
             val stretch   = index == children.lastIndex && child is JTextField
             // a trailing input only needs room for what is typed, otherwise an empty input would open a row of its own
-            val needed    = if (stretch) minInputWidth(child as JTextField, preferred) else preferred
+            val needed    = if (stretch) minInputWidth(child, preferred) else preferred
             if (x > left && x + needed > right) {
                 row++
                 x = left

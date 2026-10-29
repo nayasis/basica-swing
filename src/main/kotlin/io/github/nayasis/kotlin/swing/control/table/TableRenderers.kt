@@ -15,8 +15,8 @@ private const val KEY_UI_SYNC = "basica.table.rendererUiSync"
 
 /** the column classes JTable has a default renderer for. */
 internal val DEFAULT_RENDERER_TYPES: List<Class<*>> = listOf(
-    Any::class.java, Number::class.java, java.lang.Float::class.java, java.lang.Double::class.java,
-    Date::class.java, Icon::class.java, ImageIcon::class.java, java.lang.Boolean::class.java,
+    Any::class.java, Number::class.java, Float::class.javaObjectType, Double::class.javaObjectType,
+    Date::class.java, Icon::class.java, ImageIcon::class.java, Boolean::class.javaObjectType,
 )
 
 /** a renderer that decorates another one. */

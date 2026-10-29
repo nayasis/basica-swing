@@ -91,6 +91,8 @@ tasks.withType<Test> {
 	useJUnitPlatform()
 	// tests set a JTable drop location, which only the drag and drop machinery can do
 	jvmArgs("--add-opens=java.desktop/javax.swing=ALL-UNNAMED")
+	// webp-imageio loads its native library
+	jvmArgs("--enable-native-access=ALL-UNNAMED")
 }
 
 mavenPublishing {
